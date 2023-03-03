@@ -5,14 +5,13 @@ import optparse # parse CL arguments - allows you to define the options you want
 import re #search for a pattern in a string
 import random
 
-def generate_mac(): #define 1st function
-    mac = [ random.randint(0x00, 0x7f),
-            random.randint(0x00, 0x7f),
-            random.randint(0x00, 0x7f),
-            random.randint(0x00, 0x7f),
-            random.randint(0x00, 0xff),
-            random.randint(0x00, 0xff)]
-    return ':'.join(map(lambda x: "%02x" % x, mac)) # lambda arguments : expression
+def generate_mac():
+    mac_prefix = "02:00:00"
+    mac_suffix = [random.randint(0x00, 0xff) for _ in range(3)]
+    mac_address = mac_prefix + ":" + ":".join(map(lambda x: "%02x" % x, mac_suffix))
+
+    return mac_address
+
 
 def get_arguments():
     parser = optparse.OptionParser() #parse CL options and arguments
@@ -28,9 +27,9 @@ def get_arguments():
 def change_mac(interface, new_mac=None):
     if new_mac is None or interface is None:
         new_mac = generate_mac()
-    print("[+] Changing MAC address for " + interface + " to " + new_mac)
+    # print("[+] Changing MAC address for " + interface + " to " + new_mac)
     subprocess.call(["ifconfig", interface, "down"])
-    subprocess.call(["ifconfig", interface, "hw ether", new_mac])
+    subprocess.call(["ifconfig", interface, "hw", "ether", new_mac])
     subprocess.call(["ifconfig", interface, "up"])
 
 
@@ -46,5 +45,8 @@ def get_current_mac(interface):
 
 options = get_arguments()
 current_mac = get_current_mac(options.interface)
-print("Current Mac address is " + str(current_mac))
+print("[+] Old Mac address is " + str(current_mac))
 change_mac(options.interface, options.new_mac)
+
+current_mac = get_current_mac(options.interface)
+print("[+] New Mac address is " + str(current_mac))
